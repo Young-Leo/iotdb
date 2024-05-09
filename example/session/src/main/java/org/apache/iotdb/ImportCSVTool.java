@@ -50,10 +50,10 @@ public class ImportCSVTool {
 
   public static void main(String[] args)
       throws IOException, IoTDBConnectionException, StatementExecutionException {
-    constructRedirectSessionPool();
+    constructRedirectSessionPool(args[0]);
 
-    sessionService = Executors.newFixedThreadPool(20);
-    loaderService = Executors.newFixedThreadPool(20);
+    sessionService = Executors.newFixedThreadPool(22);
+    loaderService = Executors.newFixedThreadPool(22);
 
     try {
       sessionPool.createDatabase("root.readings");
@@ -64,16 +64,18 @@ public class ImportCSVTool {
           "create schema template diagnostics aligned (fuel_state DOUBLE, current_load INT32, status INT32);");
       sessionPool.executeNonQueryStatement("set schema template readings to root.readings;");
       sessionPool.executeNonQueryStatement("set schema template diagnostics to root.diagnostics;");
+      System.out.println("Create schema finished.");
     } catch (Exception ignore) {
       // do nothing
     }
 
-    String folder = "/Volumes/ExtHD/ExtDocuments/csv";
-    if (args.length >= 1) {
-      folder = args[0];
+    String folder = "/data/tsbs/csvFile";
+    if (args.length >= 2) {
+      folder = args[1];
     }
     List<Future<?>> futures = new LinkedList<>();
     File folderFile = SystemFileFactory.INSTANCE.getFile(folder);
+    System.out.println("Start importing!");
     long startTime = System.currentTimeMillis();
     if (folderFile.isDirectory()) {
       File[] files =
@@ -99,7 +101,7 @@ public class ImportCSVTool {
       System.out.println(
           "Import "
               + folder
-              + " finished. Total cost: "
+              + " finished. Total cost in ms: "
               + (System.currentTimeMillis() - startTime));
     } else {
       if (folderFile.getName().contains("reading")) {
@@ -121,23 +123,21 @@ public class ImportCSVTool {
       System.out.println(
           "Import "
               + folder
-              + " finished. Total cost: "
+              + " finished. Total cost in ms: "
               + (System.currentTimeMillis() - startTime));
     }
     loaderService.shutdown();
     sessionService.shutdown();
   }
 
-  private static void constructRedirectSessionPool() {
-    List<String> nodeUrls = new ArrayList<>();
-    nodeUrls.add("127.0.0.1:6667");
-    //    nodeUrls.add("127.0.0.1:6668");
+  private static void constructRedirectSessionPool(String host) {
     sessionPool =
         new SessionPool.Builder()
-            .nodeUrls(nodeUrls)
+            .host(host)
+            .port(6667)
             .user("root")
             .password("root")
-            .maxSize(20)
+            .maxSize(22)
             .build();
   }
 
@@ -246,7 +246,7 @@ public class ImportCSVTool {
                     file.getName()
                         + " Progress: "
                         + currentProgress.get()
-                        + "% cost "
+                        + "% cost in ms"
                         + (System.currentTimeMillis() - startTime));
               }
             }
@@ -363,7 +363,7 @@ public class ImportCSVTool {
                     file.getName()
                         + " Progress: "
                         + currentProgress.get()
-                        + "% cost "
+                        + "% cost in ms"
                         + (System.currentTimeMillis() - startTime));
               }
             }
