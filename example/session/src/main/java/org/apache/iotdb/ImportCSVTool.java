@@ -101,8 +101,8 @@ public class ImportCSVTool {
       System.out.println(
           "Import "
               + folder
-              + " finished. Total cost in ms: "
-              + (System.currentTimeMillis() - startTime));
+              + " finished. Total cost: "
+              + (System.currentTimeMillis() - startTime) + " ms");
     } else {
       if (folderFile.getName().contains("reading")) {
         futures.add(
@@ -123,8 +123,8 @@ public class ImportCSVTool {
       System.out.println(
           "Import "
               + folder
-              + " finished. Total cost in ms: "
-              + (System.currentTimeMillis() - startTime));
+              + " finished. Total cost "
+              + (System.currentTimeMillis() - startTime) + " ms");
     }
     loaderService.shutdown();
     sessionService.shutdown();
@@ -246,8 +246,8 @@ public class ImportCSVTool {
                     file.getName()
                         + " Progress: "
                         + currentProgress.get()
-                        + "% cost in ms"
-                        + (System.currentTimeMillis() - startTime));
+                        + "% cost "
+                        + (System.currentTimeMillis() - startTime) + " ms");
               }
             }
           });
@@ -363,8 +363,8 @@ public class ImportCSVTool {
                     file.getName()
                         + " Progress: "
                         + currentProgress.get()
-                        + "% cost in ms"
-                        + (System.currentTimeMillis() - startTime));
+                        + "% cost "
+                        + (System.currentTimeMillis() - startTime) + " ms");
               }
             }
           });
