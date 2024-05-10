@@ -24,11 +24,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -42,11 +45,17 @@ public class ImportCSVTool {
 
   private static ExecutorService loaderService;
 
+  private static ScheduledExecutorService logger;
+
   private static final String attributesDB = "root.attributes";
 
   private static final Map<String, Long> timeStringCache = new ConcurrentHashMap<>();
 
   private static final Set<String> nameSet = ConcurrentHashMap.newKeySet();
+
+  private static final ArrayBlockingQueue<Boolean> queue = new ArrayBlockingQueue<>(400);
+
+  private static final AtomicLong totalPoints = new AtomicLong();
 
   public static void main(String[] args)
       throws IOException, IoTDBConnectionException, StatementExecutionException {
@@ -77,6 +86,20 @@ public class ImportCSVTool {
     File folderFile = SystemFileFactory.INSTANCE.getFile(folder);
     System.out.println("Start importing!");
     long startTime = System.currentTimeMillis();
+
+    logger = Executors.newScheduledThreadPool(1);
+    logger.scheduleAtFixedRate(
+        () -> {
+          long points = totalPoints.get();
+          long time = (System.currentTimeMillis() - startTime) / 1000;
+          double throughout = (double) points / time;
+          System.out.println("Total points: " + points);
+          System.out.println("Total Time: " + points + " ms");
+          System.out.println("Throughout: " + throughout + " points/s");
+        },
+        0,
+        1,
+        TimeUnit.MINUTES);
     if (folderFile.isDirectory()) {
       File[] files =
           FSFactoryProducer.getFSFactory().listFilesBySuffix(folderFile.getAbsolutePath(), ".csv");
@@ -102,7 +125,8 @@ public class ImportCSVTool {
           "Import "
               + folder
               + " finished. Total cost: "
-              + (System.currentTimeMillis() - startTime) + " ms");
+              + (System.currentTimeMillis() - startTime)
+              + " ms");
     } else {
       if (folderFile.getName().contains("reading")) {
         futures.add(
@@ -113,6 +137,7 @@ public class ImportCSVTool {
             loaderService.submit(
                 () -> importCsvDiagnostics(folderFile, folderFile.getName().contains("null"))));
       }
+
       for (Future<?> task : futures) {
         try {
           task.get();
@@ -124,10 +149,12 @@ public class ImportCSVTool {
           "Import "
               + folder
               + " finished. Total cost "
-              + (System.currentTimeMillis() - startTime) + " ms");
+              + (System.currentTimeMillis() - startTime)
+              + " ms");
     }
     loaderService.shutdown();
     sessionService.shutdown();
+    logger.shutdown();
   }
 
   private static void constructRedirectSessionPool(String host) {
@@ -203,14 +230,26 @@ public class ImportCSVTool {
                 }
                 if (currentDeviceId[0] != null) {
                   Tablet oldTablet = tabletMap.remove(currentDeviceId[0]);
+                  try {
+                    queue.put(true);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
                   sessionService.submit(
                       () -> {
                         try {
                           sessionPool.insertAlignedTablet(oldTablet);
+                          totalPoints.addAndGet(
+                              (long) oldTablet.rowSize * oldTablet.getSchemas().size());
                         } catch (IoTDBConnectionException | StatementExecutionException e) {
                           throw new RuntimeException(e);
+                        } finally {
+                          try {
+                            queue.take();
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
                         }
-                        oldTablet.reset();
                       });
                 }
                 currentDeviceId[0] = deviceId;
@@ -218,14 +257,26 @@ public class ImportCSVTool {
                 Tablet tablet = tabletMap.get(currentDeviceId[0]);
                 if (tablet.rowSize == tablet.getMaxRowNumber()) {
                   Tablet oldTablet = tabletMap.remove(currentDeviceId[0]);
+                  try {
+                    queue.put(true);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
                   sessionService.submit(
                       () -> {
                         try {
                           sessionPool.insertAlignedTablet(oldTablet);
+                          totalPoints.addAndGet(
+                              (long) oldTablet.rowSize * oldTablet.getSchemas().size());
                         } catch (IoTDBConnectionException | StatementExecutionException e) {
                           throw new RuntimeException(e);
+                        } finally {
+                          try {
+                            queue.take();
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
                         }
-                        oldTablet.reset();
                       });
                 }
               }
@@ -247,13 +298,15 @@ public class ImportCSVTool {
                         + " Progress: "
                         + currentProgress.get()
                         + "% cost "
-                        + (System.currentTimeMillis() - startTime) + " ms");
+                        + (System.currentTimeMillis() - startTime)
+                        + " ms");
               }
             }
           });
       if (!tabletMap.isEmpty()) {
         for (Tablet tablet : tabletMap.values()) {
           sessionPool.insertAlignedTablet(tablet);
+          totalPoints.addAndGet((long) tablet.rowSize * tablet.getSchemas().size());
         }
         tabletMap.clear();
       }
@@ -320,14 +373,26 @@ public class ImportCSVTool {
                 }
                 if (currentDeviceId[0] != null) {
                   Tablet oldTablet = tabletMap.remove(currentDeviceId[0]);
+                  try {
+                    queue.put(true);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
                   sessionService.submit(
                       () -> {
                         try {
                           sessionPool.insertAlignedTablet(oldTablet);
+                          totalPoints.addAndGet(
+                              (long) oldTablet.rowSize * oldTablet.getSchemas().size());
                         } catch (IoTDBConnectionException | StatementExecutionException e) {
                           throw new RuntimeException(e);
+                        } finally {
+                          try {
+                            queue.take();
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
                         }
-                        oldTablet.reset();
                       });
                 }
                 currentDeviceId[0] = deviceId;
@@ -335,14 +400,26 @@ public class ImportCSVTool {
                 Tablet tablet = tabletMap.get(currentDeviceId[0]);
                 if (tablet.rowSize == tablet.getMaxRowNumber()) {
                   Tablet oldTablet = tabletMap.remove(currentDeviceId[0]);
+                  try {
+                    queue.put(true);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
                   sessionService.submit(
                       () -> {
                         try {
                           sessionPool.insertAlignedTablet(oldTablet);
+                          totalPoints.addAndGet(
+                              (long) oldTablet.rowSize * oldTablet.getSchemas().size());
                         } catch (IoTDBConnectionException | StatementExecutionException e) {
                           throw new RuntimeException(e);
+                        } finally {
+                          try {
+                            queue.take();
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
                         }
-                        oldTablet.reset();
                       });
                 }
               }
@@ -364,13 +441,15 @@ public class ImportCSVTool {
                         + " Progress: "
                         + currentProgress.get()
                         + "% cost "
-                        + (System.currentTimeMillis() - startTime) + " ms");
+                        + (System.currentTimeMillis() - startTime)
+                        + " ms");
               }
             }
           });
       if (!tabletMap.isEmpty()) {
         for (Tablet tablet : tabletMap.values()) {
           sessionPool.insertAlignedTablet(tablet);
+          totalPoints.addAndGet((long) tablet.rowSize * tablet.getSchemas().size());
         }
         tabletMap.clear();
       }
