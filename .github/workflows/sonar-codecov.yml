@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - "rel/*"
+      - branch-fixsonarbug202405
     paths-ignore:
       - "docs/**"
       - 'site/**'
