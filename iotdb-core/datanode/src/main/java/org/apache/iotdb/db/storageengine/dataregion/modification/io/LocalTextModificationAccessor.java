@@ -172,8 +172,11 @@ public class LocalTextModificationAccessor
     if (fos == null) {
       fos = new FileOutputStream(filePath, true);
     }
-    fos.write(encodeModification(mod).getBytes());
-    fos.write(System.lineSeparator().getBytes());
+    String line = encodeModification(mod);
+    if (line != null) {
+      fos.write(line.getBytes());
+      fos.write(System.lineSeparator().getBytes());
+    }
   }
 
   @TestOnly

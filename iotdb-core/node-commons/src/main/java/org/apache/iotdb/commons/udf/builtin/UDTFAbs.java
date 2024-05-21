@@ -132,7 +132,7 @@ public class UDTFAbs extends UDTFMath {
     throw new UnsupportedOperationException("UDTFAbs#setTransformer()");
   }
 
-  protected void transformInt(Column[] columns, ColumnBuilder builder) {
+  private void transformInt(Column[] columns, ColumnBuilder builder) {
     int[] inputs = columns[0].getInts();
     boolean[] isNulls = columns[0].isNull();
 
@@ -146,7 +146,7 @@ public class UDTFAbs extends UDTFMath {
     }
   }
 
-  protected void transformLong(Column[] columns, ColumnBuilder builder) {
+  private void transformLong(Column[] columns, ColumnBuilder builder) {
     long[] inputs = columns[0].getLongs();
     boolean[] isNulls = columns[0].isNull();
 
@@ -160,7 +160,7 @@ public class UDTFAbs extends UDTFMath {
     }
   }
 
-  protected void transformFloat(Column[] columns, ColumnBuilder builder) {
+  private void transformFloat(Column[] columns, ColumnBuilder builder) {
     float[] inputs = columns[0].getFloats();
     boolean[] isNulls = columns[0].isNull();
 
@@ -174,7 +174,7 @@ public class UDTFAbs extends UDTFMath {
     }
   }
 
-  protected void transformDouble(Column[] columns, ColumnBuilder builder) {
+  private void transformDouble(Column[] columns, ColumnBuilder builder) {
     double[] inputs = columns[0].getDoubles();
     boolean[] isNulls = columns[0].isNull();
 

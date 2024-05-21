@@ -131,6 +131,8 @@ public class TimePartitionProcessTask {
       try {
         SequenceFileTaskSummary sequenceFileTaskSummary = future.get();
         overlapStatistic.mergeSingleSequenceFileTaskResult(sequenceFileTaskSummary);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
         e.printStackTrace();
       }

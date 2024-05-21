@@ -20,7 +20,6 @@ package org.apache.iotdb.db.tools.schema;
 
 import org.apache.iotdb.commons.exception.MetadataException;
 import org.apache.iotdb.commons.file.SystemFileFactory;
-import org.apache.iotdb.db.schemaengine.schemaregion.mtree.impl.pbtree.schemafile.ISchemaFile;
 import org.apache.iotdb.db.schemaengine.schemaregion.mtree.impl.pbtree.schemafile.SchemaFile;
 
 import org.apache.commons.cli.CommandLine;
@@ -147,14 +146,12 @@ public class PBTreeFileSketchTool {
   @SuppressWarnings("squid:S106")
   public static void sketchFile(String inputFile, String outputFile)
       throws IOException, MetadataException {
-    PrintWriter pw = new PrintWriter(new FileWriter(outputFile, false));
-    ISchemaFile sf = SchemaFile.loadSchemaFile(SystemFileFactory.INSTANCE.getFile(inputFile));
-    try {
-      String res = ((SchemaFile) sf).inspect(pw);
+    SchemaFile sf = SchemaFile.loadSchemaFile(SystemFileFactory.INSTANCE.getFile(inputFile));
+    try (PrintWriter pw = new PrintWriter(new FileWriter(outputFile, false))) {
+      String res = sf.inspect(pw);
       System.out.println(res);
     } finally {
       sf.close();
-      pw.close();
     }
   }
 }

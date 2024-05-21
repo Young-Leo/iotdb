@@ -73,7 +73,7 @@ public interface BackwardSort extends QuickSort {
       i += step;
       blocks += 1;
     }
-    double ratio = overlap / blocks;
+    double ratio = blocks == 0 ? 0 : overlap / blocks;
     int mul = (int) Math.ceil(ratio / INVERSION_RATIOS_THRESHOLD);
     // System.out.printf("Overlap ratio=%.4f mul=%d, step=%d\n", ratio, mul, step);
     // ensure inversion ratio < INVERSION_RATIOS_THRESHOLD

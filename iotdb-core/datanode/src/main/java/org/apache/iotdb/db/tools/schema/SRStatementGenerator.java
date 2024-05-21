@@ -67,7 +67,7 @@ import static org.apache.iotdb.commons.schema.SchemaConstant.STORAGE_GROUP_MNODE
 import static org.apache.iotdb.commons.schema.SchemaConstant.isStorageGroupType;
 import static org.apache.iotdb.db.schemaengine.schemaregion.tag.TagLogFile.parseByteBuffer;
 
-public class SRStatementGenerator implements Iterator<Statement>, Iterable<Statement> {
+public class SRStatementGenerator implements Iterable<Statement> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SRStatementGenerator.class);
   private IMemMNode curNode;
@@ -121,75 +121,76 @@ public class SRStatementGenerator implements Iterator<Statement>, Iterable<State
 
   @Override
   public Iterator<Statement> iterator() {
-    return this;
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (!statements.isEmpty()) {
-      return true;
-    }
-    if (lastExcept != null) {
-      return false;
-    }
-    while (!ancestors.isEmpty()) {
-      final int childNum = restChildrenNum.pop();
-      if (childNum == 0) {
-        final IMemMNode node = ancestors.pop();
-        if (node.isDevice() && node.getAsDeviceMNode().isAligned()) {
-          final Statement stmt =
-              genAlignedTimeseriesStatement(
-                  node, databaseFullPath.getDevicePath().concatPath(node.getPartialPath()));
-          statements.push(stmt);
-        }
-        cleanMtreeNode(node);
+    return new Iterator<Statement>() {
+      @Override
+      public boolean hasNext() {
         if (!statements.isEmpty()) {
           return true;
         }
-      } else {
-        restChildrenNum.push(childNum - 1);
-        try {
-          curNode = deserializeMNode(ancestors, restChildrenNum, deserializer, inputStream);
-          nodeCount++;
-        } catch (IOException ioe) {
-          lastExcept = ioe;
-          try {
-            inputStream.close();
-            tagFileChannel.close();
-
-          } catch (IOException e) {
-            lastExcept = e;
-          }
+        if (lastExcept != null) {
           return false;
         }
-        final List<Statement> stmts =
-            curNode.accept(
-                translater, databaseFullPath.getDevicePath().concatPath(curNode.getPartialPath()));
-        if (stmts != null) {
-          statements.addAll(stmts);
-        }
-        if (!statements.isEmpty()) {
-          return true;
-        }
-      }
-    }
-    try {
-      inputStream.close();
-      if (tagFileChannel != null) {
-        tagFileChannel.close();
-      }
-    } catch (IOException e) {
-      lastExcept = e;
-    }
-    return false;
-  }
+        while (!ancestors.isEmpty()) {
+          final int childNum = restChildrenNum.pop();
+          if (childNum == 0) {
+            final IMemMNode node = ancestors.pop();
+            if (node.isDevice() && node.getAsDeviceMNode().isAligned()) {
+              final Statement stmt =
+                  genAlignedTimeseriesStatement(
+                      node, databaseFullPath.getDevicePath().concatPath(node.getPartialPath()));
+              statements.push(stmt);
+            }
+            cleanMtreeNode(node);
+            if (!statements.isEmpty()) {
+              return true;
+            }
+          } else {
+            restChildrenNum.push(childNum - 1);
+            try {
+              curNode = deserializeMNode(ancestors, restChildrenNum, deserializer, inputStream);
+              nodeCount++;
+            } catch (IOException ioe) {
+              lastExcept = ioe;
+              try {
+                inputStream.close();
+                tagFileChannel.close();
 
-  @Override
-  public Statement next() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
-    }
-    return statements.pop();
+              } catch (IOException e) {
+                lastExcept = e;
+              }
+              return false;
+            }
+            final List<Statement> stmts =
+                curNode.accept(
+                    translater,
+                    databaseFullPath.getDevicePath().concatPath(curNode.getPartialPath()));
+            if (stmts != null) {
+              statements.addAll(stmts);
+            }
+            if (!statements.isEmpty()) {
+              return true;
+            }
+          }
+        }
+        try {
+          inputStream.close();
+          if (tagFileChannel != null) {
+            tagFileChannel.close();
+          }
+        } catch (IOException e) {
+          lastExcept = e;
+        }
+        return false;
+      }
+
+      @Override
+      public Statement next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return statements.pop();
+      }
+    };
   }
 
   public void checkException() throws IOException {

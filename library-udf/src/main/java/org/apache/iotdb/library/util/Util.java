@@ -124,19 +124,19 @@ public class Util {
   public static void putValue(PointCollector pc, Type type, long t, Object o) throws IOException {
     switch (type) {
       case INT32:
-        pc.putInt(t, (Integer) o);
+        pc.putInt(t, (int) o);
         break;
       case INT64:
-        pc.putLong(t, (Long) o);
+        pc.putLong(t, (long) o);
         break;
       case FLOAT:
-        pc.putFloat(t, (Float) o);
+        pc.putFloat(t, (float) o);
         break;
       case DOUBLE:
-        pc.putDouble(t, (Double) o);
+        pc.putDouble(t, (double) o);
         break;
       case BOOLEAN:
-        pc.putBoolean(t, (Boolean) o);
+        pc.putBoolean(t, (boolean) o);
         break;
       default:
         break;
