@@ -307,8 +307,7 @@ public class IoTDBDataNodeReceiver extends IoTDBFileReceiver {
     // Clear to avoid previous exceptions
     batchVisitor.clear();
     final List<TSStatus> results = new ArrayList<>();
-    while (generator.hasNext()) {
-      final Statement originalStatement = generator.next();
+    for (Statement originalStatement : generator) {
       if (!executionTypes.contains(originalStatement.getType())) {
         continue;
       }
