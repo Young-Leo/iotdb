@@ -51,6 +51,7 @@ import org.apache.iotdb.commons.subscription.meta.topic.TopicMeta;
 import org.apache.iotdb.commons.trigger.service.TriggerExecutableManager;
 import org.apache.iotdb.commons.udf.service.UDFClassLoader;
 import org.apache.iotdb.commons.udf.service.UDFExecutableManager;
+import org.apache.iotdb.commons.utils.CommonDateTimeUtils;
 import org.apache.iotdb.commons.utils.TimePartitionUtils;
 import org.apache.iotdb.confignode.rpc.thrift.TAlterLogicalViewReq;
 import org.apache.iotdb.confignode.rpc.thrift.TAlterPipeReq;
@@ -161,10 +162,10 @@ import org.apache.iotdb.db.queryengine.plan.execution.config.sys.subscription.Sh
 import org.apache.iotdb.db.queryengine.plan.expression.Expression;
 import org.apache.iotdb.db.queryengine.plan.expression.visitor.TransformToViewExpressionVisitor;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.node.metedata.write.view.AlterLogicalViewNode;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.CreateDB;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.DropDB;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.ShowDB;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Use;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.CreateDB;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.DropDB;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.ShowDB;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Use;
 import org.apache.iotdb.db.queryengine.plan.statement.metadata.CountDatabaseStatement;
 import org.apache.iotdb.db.queryengine.plan.statement.metadata.CountTimeSlotListStatement;
 import org.apache.iotdb.db.queryengine.plan.statement.metadata.CreateContinuousQueryStatement;
@@ -1933,7 +1934,12 @@ public class ClusterConfigTaskExecutor implements IConfigTaskExecutor {
 
     // Validate topic config
     final TopicMeta temporaryTopicMeta =
-        new TopicMeta(topicName, System.currentTimeMillis(), topicAttributes);
+        new TopicMeta(
+            topicName,
+            CommonDateTimeUtils.convertMilliTimeWithPrecision(
+                System.currentTimeMillis(),
+                CommonDescriptor.getInstance().getConfig().getTimestampPrecision()),
+            topicAttributes);
     try {
       PipeAgent.plugin().validateExtractor(temporaryTopicMeta.generateExtractorAttributes());
       PipeAgent.plugin().validateProcessor(temporaryTopicMeta.generateProcessorAttributes());

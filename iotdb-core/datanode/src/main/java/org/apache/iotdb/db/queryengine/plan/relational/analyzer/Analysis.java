@@ -19,35 +19,38 @@
 
 package org.apache.iotdb.db.queryengine.plan.relational.analyzer;
 
+import org.apache.iotdb.common.rpc.thrift.TEndPoint;
 import org.apache.iotdb.common.rpc.thrift.TSStatus;
 import org.apache.iotdb.commons.partition.DataPartition;
+import org.apache.iotdb.commons.partition.SchemaPartition;
 import org.apache.iotdb.db.queryengine.common.MPPQueryContext;
 import org.apache.iotdb.db.queryengine.common.header.DatasetHeader;
 import org.apache.iotdb.db.queryengine.plan.analyze.IAnalysis;
 import org.apache.iotdb.db.queryengine.plan.execution.memory.StatementMemorySource;
+import org.apache.iotdb.db.queryengine.plan.planner.plan.TimePredicate;
 import org.apache.iotdb.db.queryengine.plan.relational.metadata.QualifiedObjectName;
 import org.apache.iotdb.db.queryengine.plan.relational.metadata.TableSchema;
 import org.apache.iotdb.db.queryengine.plan.relational.security.AccessControl;
 import org.apache.iotdb.db.queryengine.plan.relational.security.Identity;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.AllColumns;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.DataType;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.ExistsPredicate;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Expression;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.FunctionCall;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.InPredicate;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Join;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Node;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Offset;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.OrderBy;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Parameter;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.QualifiedName;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.QuantifiedComparisonExpression;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Query;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.QuerySpecification;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Relation;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Statement;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.SubqueryExpression;
-import org.apache.iotdb.db.queryengine.plan.relational.sql.tree.Table;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.AllColumns;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.DataType;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.ExistsPredicate;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Expression;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.FunctionCall;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.InPredicate;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Join;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Node;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Offset;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.OrderBy;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Parameter;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.QualifiedName;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.QuantifiedComparisonExpression;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Query;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.QuerySpecification;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Relation;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Statement;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.SubqueryExpression;
+import org.apache.iotdb.db.queryengine.plan.relational.sql.ast.Table;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -639,6 +642,27 @@ public class Analysis implements IAnalysis {
 
   @Override
   public String getStatementType() {
+    return null;
+  }
+
+  @Override
+  public SchemaPartition getSchemaPartitionInfo() {
+    return null;
+  }
+
+  @Override
+  public DataPartition getDataPartitionInfo() {
+    return dataPartition;
+  }
+
+  @Override
+  public void setRedirectNodeList(List<TEndPoint> redirectNodeList) {}
+
+  @Override
+  public void addEndPointToRedirectNodeList(TEndPoint endPoint) {}
+
+  @Override
+  public TimePredicate getCovertedTimePredicate() {
     return null;
   }
 
