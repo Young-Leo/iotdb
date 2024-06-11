@@ -17,7 +17,7 @@ import org.apache.iotdb.common.rpc.thrift.TRegionReplicaSet;
 import org.apache.iotdb.db.queryengine.common.MPPQueryContext;
 import org.apache.iotdb.db.queryengine.execution.exchange.sink.DownStreamChannelLocation;
 import org.apache.iotdb.db.queryengine.plan.analyze.QueryType;
-import org.apache.iotdb.db.queryengine.plan.planner.distribution.TableModelWriteFragmentPlanner;
+import org.apache.iotdb.db.queryengine.plan.planner.distribution.WriteFragmentParallelPlanner;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.DistributedQueryPlan;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.FragmentInstance;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.LogicalQueryPlan;
@@ -79,7 +79,7 @@ public class TableDistributionPlanner {
     List<FragmentInstance> fragmentInstances =
         mppQueryContext.getQueryType() == QueryType.READ
             ? new TableModelQueryFragmentPlanner(subPlan, analysis, mppQueryContext).parallelPlan()
-            : new TableModelWriteFragmentPlanner(subPlan, analysis, mppQueryContext).parallelPlan();
+            : new WriteFragmentParallelPlanner(subPlan, analysis, mppQueryContext).parallelPlan();
 
     // Only execute this step for READ operation
     if (mppQueryContext.getQueryType() == QueryType.READ) {
