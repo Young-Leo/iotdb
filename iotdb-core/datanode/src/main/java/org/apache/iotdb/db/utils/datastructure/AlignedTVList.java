@@ -19,6 +19,7 @@
 
 package org.apache.iotdb.db.utils.datastructure;
 
+import org.apache.iotdb.db.conf.IoTDBDescriptor;
 import org.apache.iotdb.db.storageengine.dataregion.wal.buffer.IWALByteBufferView;
 import org.apache.iotdb.db.storageengine.dataregion.wal.utils.WALWriteUtils;
 import org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager;
@@ -699,7 +700,8 @@ public abstract class AlignedTVList extends TVList {
 
   @Override
   public boolean reachMaxChunkSizeThreshold() {
-    return reachMaxChunkSizeFlag;
+    return reachMaxChunkSizeFlag
+        || rowCount >= IoTDBDescriptor.getInstance().getConfig().getAvgSeriesPointNumberThreshold();
   }
 
   @SuppressWarnings("squid:S3776") // Suppress high Cognitive Complexity warning
