@@ -394,23 +394,25 @@ public class TableLogicalPlanner {
       QueryPlanCostMetricSet.getInstance()
           .recordTablePlanCost(LOGICAL_PLAN_OPTIMIZE, logicalOptimizationCost);
 
-      CachedValue.ClonerContext clonerContext =
-          new CachedValue.ClonerContext(queryContext.getQueryId(), literalReference);
-      PlanNode clonedPlan = clonePlanWithNewLiterals(planNode, clonerContext);
-      List<DeviceTableScanNode> scanNodes = collectDeviceTableScanNodes(clonedPlan);
+      if (enablePlanCache(statement)) {
+        CachedValue.ClonerContext clonerContext =
+            new CachedValue.ClonerContext(queryContext.getQueryId(), literalReference);
+        PlanNode clonedPlan = clonePlanWithNewLiterals(planNode, clonerContext);
+        List<DeviceTableScanNode> scanNodes = collectDeviceTableScanNodes(clonedPlan);
 
-      PlanCacheManager.getInstance()
-          .cacheValue(
-              cachedKey,
-              clonedPlan,
-              scanNodes,
-              literalReference,
-              analysis.getRespDatasetHeader(),
-              symbolAllocator.cloneSymbolMap(),
-              symbolAllocator.getNextId(),
-              queryContext.getMetadataExpressionLists(),
-              queryContext.getAttributeColumnsLists(),
-              queryContext.getAssignmentsLists());
+        PlanCacheManager.getInstance()
+            .cacheValue(
+                cachedKey,
+                clonedPlan,
+                scanNodes,
+                literalReference,
+                analysis.getRespDatasetHeader(),
+                symbolAllocator.cloneSymbolMap(),
+                symbolAllocator.getNextId(),
+                queryContext.getMetadataExpressionLists(),
+                queryContext.getAttributeColumnsLists(),
+                queryContext.getAssignmentsLists());
+      }
     }
     logger.info(
         "Logical plan is generated, fetch schema cost time: {}",
